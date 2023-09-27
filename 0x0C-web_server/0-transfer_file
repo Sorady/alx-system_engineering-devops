@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # Transfers a file from our client to a server
-#
-# variables
 path="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 filename=$(basename "$BASH_SOURCE")
 brown='\e[0;33m'
