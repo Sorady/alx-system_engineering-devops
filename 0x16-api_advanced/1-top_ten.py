@@ -1,24 +1,22 @@
 #!/usr/bin/python3
-""" Function that queries the Reddit API """
+"""
+Python script that, using this REST API, for a given subreddit,
+returns the 10 hot posts
+"""
 import requests
 
 
 def top_ten(subreddit):
-    """Prints the titles of the first 10 hot posts listed for a given subreddit
-
-    Args:
-        subreddit: Account to search
     """
-    if subreddit is None or type(subreddit) is not str:
-        return 0
-    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
-    User_Agent = 'AgentMEGO'
-    header = {'User-Agent': User_Agent}
-    with requests.Session() as res:
-        data = res.get(url, headers=header)
-        if data.status_code != 200:
-            print(None)
-            return
-        data = data.json().get('data').get('children')
-        for i in data[0:10]:
-            print(i.get('data').get('title'))
+    Returns the 10 hot posts for a given subreddit.
+    """
+    url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=10"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        for post in data['data']['children']:
+            print(post['data']['title'])
+    else:
+        print(None)
