@@ -1,55 +1,51 @@
 #!/usr/bin/python3
-"""Function to count words in all hot posts of a given Reddit subreddit."""
+"""This module contains the count_words function."""
 import requests
 
 
-def count_words(subreddit, word_list, instances={}, after="", count=0):
-    """Prints counts of given words found in hot posts of a given subreddit.
-
-    Args:
-        subreddit (str): The subreddit to search.
-        word_list (list): The list of words to search for in post titles.
-        instances (obj): Key/value pairs of words/counts.
-        after (str): The parameter for the next page of the API results.
-        count (int): The parameter of results matched thus far.
+def count_words(subreddit, wordlist, after="", count=0, word_count={}):
+    """Recursively queries Reddit API, parses all hot posts' titles for a
+    given subreddit and prints sorted word frequency of given keywords.
     """
-    url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
+
+    word_list = [w.lower() for w in wordlist]
+
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
     headers = {
-        "User-Agent": "My User Agent 1.0"
-    }
-    params = {
-        "after": after,
-        "count": count,
-        "limit": 100
-    }
-    response = requests.get(url, headers=headers, params=params,
-                            allow_redirects=False)
+            "user-agent": "Python:recurse_script:v1.0.0 (bu /u/Peace_Deer4685)"
+            }
+    payload = {
+            "after": after,
+            "count": count,
+            "limit": 100
+            }
+
+    res = requests.get(url, headers=headers, params=payload,
+                       allow_redirects=False)
+
     try:
-        results = response.json()
-        if response.status_code == 404:
+        if res.status_code == 404:
             raise Exception
+        res = res.json()
     except Exception:
-        print("")
         return
 
-    results = results.get("data")
-    after = results.get("after")
-    count += results.get("dist")
-    for c in results.get("children"):
-        title = c.get("data").get("title").lower().split()
-        for word in word_list:
-            if word.lower() in title:
-                times = len([t for t in title if t == word.lower()])
-                if instances.get(word) is None:
-                    instances[word] = times
-                else:
-                    instances[word] += times
+    res = res.get("data")
+    after = res.get("after")
+    count = res.get("count")
+    for p in res.get("children"):
+        title = p.get("data").get("title").lower().split()
+        for w in title:
+            if w in word_list:
+                c = word_count.get(w, 0)
+                word_count[w] = c + 1
 
-    if after is None:
-        if len(instances) == 0:
-            print("")
-            return
-        instances = sorted(instances.items(), key=lambda kv: (-kv[1], kv[0]))
-        [print("{}: {}".format(k, v)) for k, v in instances]
+    if after is not None:
+        count_words(subreddit, wordlist, after, count, word_count)
+    elif len(word_count) == 0:
+        return
     else:
-        count_words(subreddit, word_list, instances, after, count)
+        word_count = sorted(word_count.items(), key=lambda i: (-i[1], i[0]))
+
+        for key, val in word_count:
+            print("{}: {}".format(key, val))
