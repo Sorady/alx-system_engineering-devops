@@ -1,62 +1,33 @@
 #!/usr/bin/python3
-""" Count it! """
+""" module to get all hot posts on subreddit """
 from requests import get
 
-REDDIT = "https://www.reddit.com/"
-HEADERS = {'user-agent': 'esw1229/0.0.1'}
 
-
-def count_words(subreddit, word_list, after="", word_dic={}):
+def count_words(subreddit, word_list, obj={}, after=''):
+    """ get all hot posts on provided subreddit
+        Params:
+            subreddit: subreddit provided to search in it
+            hot_list: list of titles
+        Return:
+            list of all title of posts
     """
-    Returns a list containing the titles of all hot articles for a
-    given subreddit. If no results are found for the given subreddit,
-    the function should return None.
-    """
-    if not word_dic:
-        for word in word_list:
-            word_dic[word] = 0
-
-    if after is None:
-        word_list = [[key, value] for key, value in word_dic.items()]
-        word_list = sorted(word_list, key=lambda x: (-x[1], x[0]))
-        for w in word_list:
-            if w[1]:
-                print("{}: {}".format(w[0].lower(), w[1]))
-        return None
-
-    url = REDDIT + "r/{}/hot/.json".format(subreddit)
-
-    params = {
-        'limit': 100,
-        'after': after
-    }
-
-    r = get(url, headers=HEADERS, params=params, allow_redirects=False)
-
-    if r.status_code != 200:
-        return None
-
-    try:
-        js = r.json()
-
-    except ValueError:
-        return None
-
-    try:
-
-        data = js.get("data")
-        after = data.get("after")
-        children = data.get("children")
-        for child in children:
-            post = child.get("data")
-            title = post.get("title")
-            lower = [s.lower() for s in title.split(' ')]
-
-            for w in word_list:
-                word_dic[w] += lower.count(w.lower())
-
-    except:
-        return None
-
-    count_words(subreddit, word_list, after, word_dic)
-    
+    if obj == {}:
+        for li in word_list:
+            obj[li] = 0
+    url = f'https://www.reddit.com/r/{subreddit}/hot.json{after}'
+    header = {'User-Agent': 'Amgad_fikry_alx_task_3'}
+    req = get(url, allow_redirects=False, headers=header)
+    if req.status_code == 200:
+        data = req.json().get('data')
+        posts = data.get('children')
+        for post in posts:
+            for li in word_list:
+                if post.get('data').get('title').find(li) != -1:
+                    obj[li] = obj[li] + 1
+        if data.get('after') != 'null':
+            count_words(subreddit,
+                        word_list,
+                        obj,
+                        f'?after={data.get("after")}')
+        print(obj)
+        return ''
